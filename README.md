@@ -1,8 +1,5 @@
-该项目为 https://github.com/Dreamqiucn/poem 的二次修改项目
+该项目为 https://github.com/Dreamqiucn/poem 的三次修改项目
 
-米坛社区资源地址：
-https://www.bandbbs.cn/resources/3613/
-https://www.bandbbs.cn/resources/3614/
 
 ## 快速上手
 
