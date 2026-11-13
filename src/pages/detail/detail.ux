@@ -1,0 +1,194 @@
+<template>
+  <div class="page"  @swipe="toHomePage">
+    <!-- 点击跳转详情页 -->
+    <list class="list" bounces="true">
+      <list-item class="item1 justify-between" type="costom"></list-item>
+      <list-item class="item justify-between" type="costom" for="{{list}}" @click="navigateToPage($item.name)">
+        <div class="center">
+          <text class="name">{{ $item.name }}</text>
+        </div>
+      </list-item>
+      <list-item class="item empty-item" type="costom" if="{{ isEmpty }}">
+        <div class="center">
+          <text class="empty-text">这一册还没有篇目</text>
+        </div>
+      </list-item>
+      <list-item class="item1 justify-between" type="costom"></list-item>
+    </list>
+    <image class="cover" src="/common/icon/cover.png"></image>
+    <text class="time">{{ time }}</text>
+
+    <text class="title">{{ which }}</text>
+    <!--<image class="back" src="/common/icon/back.png" onclick="back"></image>-->
+  </div>
+</template>
+
+<script>
+import router from "@system.router"
+export default {
+  // 页面级组件的数据模型，影响传入数据的覆盖机制：private内定义的属性不允许被覆盖
+  private: {
+    title: "示例页面",
+    time: "00:00",
+    list: [],
+    isEmpty: false
+  },
+  onInit() {
+    // 直接通过映射获取列表
+    console.log(this.which)
+    const titles = this.$app.$def.titles()[this.which] || []
+    const list = []
+    for (let i = 0; i < titles.length; i++) list.push({ name: titles[i] })
+    this.list = list
+    this.isEmpty = list.length === 0
+    const updateTime = () => {
+      const date = new Date()
+      const hour = date.getHours().toString().padStart(2, "0")
+      const minute = date.getMinutes().toString().padStart(2, "0")
+      this.time = hour + ":" + minute
+    }
+    updateTime()
+    this.timer = setInterval(updateTime, 60000)
+  },
+  onDestroy() {
+    clearInterval(this.timer)
+  },
+  navigateToPage(name) {
+    router.push({
+      uri: "/pages/poem",
+      params: {
+        text: name
+      }
+    })
+  },
+  toHomePage(eve) {
+    if (eve.direction === "right") {
+      router.replace({
+        uri: "/pages/index"
+      })
+    }
+  },
+  back() {
+    router.replace({
+      uri: "/pages/index"
+    })
+  }
+}
+</script>
+
+<style>
+.about {
+  position: absolute;
+	left: 210px;
+	top: 36px;
+	width: 80px;
+	height: 80px;
+}
+
+.cover {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 336px;
+  height: 102px;
+  opacity: 1;
+}
+
+.page {
+  align-items: center;
+  justify-content: center;
+  background-color: #000000;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: absolute;
+  width: 100%;
+}
+
+.name {
+  font-size: 35px;
+  color: white;
+  text-overflow: ellipsis;
+  lines: 1
+}
+.time {
+  left: 77px;
+	top: 7px;
+	width: 182px;
+	height: 48px;
+	opacity: 1;
+	background: rgba(255, 255, 255, 0.6);
+	/** 文本1 */
+	font-size: 34px;
+	font-weight: 600;
+	letter-spacing: 0px;
+	line-height: 33.6px;
+	color: rgba(255, 255, 255, 0.6);
+	text-align: center;
+	vertical-align: top;
+	position: absolute;
+}
+.title {
+	top: 62px;
+	width: 192px;
+	height: 42px;
+	opacity: 1;
+	background: rgba(255, 255, 255, 1);
+	font-size: 30px;
+	font-weight: 500;
+	letter-spacing: 0px;
+	line-height: 44.8px;
+	color: rgba(255, 255, 255, 1);
+	text-align: center;
+	vertical-align: top;
+	position: absolute;
+}
+
+.list {
+  width: 100%;
+  flex: 1;
+}
+
+.center{
+  align-items: center;
+}
+
+.item {
+  padding-left: 15px;
+  padding-right: 15px;
+  margin-left: 5px;
+	height: 90px;
+	margin-top: 25px;
+	width: 326px;
+	margin-bottom: 15px;
+	border-radius: 35px;
+	background-color: rgba(38, 38, 38, 1);
+}
+
+.item1 {
+  height: 40px;
+	margin-top: 45px;
+	margin-bottom: 15px;
+	border-radius: 50px;
+}
+
+.empty-item {
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+}
+
+.empty-text {
+  font-size: 28px;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}
+
+.back {
+  position: absolute;
+	left: 45px;
+	top: 36px;
+	width: 80px;
+	height: 80px;
+}
+</style>

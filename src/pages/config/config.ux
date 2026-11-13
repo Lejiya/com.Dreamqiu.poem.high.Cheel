@@ -1,0 +1,363 @@
+<template>
+  <div class="page" @swipe="onSwipe">
+    <image class="cover" src="/common/icon/cover.png"></image>
+    <text class="time">{{ time }}</text>
+    <text class="title">背诵范围</text>
+
+    <list class="list">
+      <list-item type="row" for="{{ rows }}" @click="onRow($item.id)">
+        <div class="{{ $item.rowCls }}">
+          <text class="{{ $item.nameCls }}">{{ $item.label }}</text>
+          <text class="{{ $item.markCls }}">{{ $item.mark }}</text>
+        </div>
+      </list-item>
+    </list>
+
+    <div class="foot">
+      <text class="foot-text">已选 {{ selCount }}/{{ total }} · 点册名整册切换</text>
+    </div>
+  </div>
+</template>
+
+<style>
+.page {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #000000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cover {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 336px;
+  height: 102px;
+}
+
+.time {
+  position: absolute;
+  left: 77px;
+  top: 7px;
+  width: 182px;
+  font-size: 34px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.title {
+  position: absolute;
+  top: 62px;
+  width: 192px;
+  font-size: 30px;
+  color: #ffffff;
+  text-align: center;
+}
+
+.list {
+  margin-top: 102px;
+  flex: 1;
+  width: 336px;
+}
+
+.row {
+  width: 300px;
+  margin-left: 18px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.book {
+  height: 44px;
+  margin-top: 14px;
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+.poem {
+  margin-top: 8px;
+  padding-left: 18px;
+  padding-right: 18px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-radius: 28px;
+  background-color: rgba(38, 38, 38, 1);
+}
+
+.book-name {
+  width: 200px;
+  font-size: 26px;
+  line-height: 32px;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.poem-name {
+  width: 200px;
+  font-size: 25px;
+  line-height: 32px;
+  text-align: left;
+}
+
+.book-count {
+  width: 60px;
+  font-size: 24px;
+  text-align: right;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.poem-mark {
+  width: 60px;
+  font-size: 30px;
+  text-align: right;
+}
+
+.on {
+  color: #ffffff;
+}
+
+.off {
+  color: rgba(255, 255, 255, 0.32);
+}
+
+.foot {
+  width: 100%;
+  height: 62px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #000000;
+}
+
+.foot-text {
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}
+</style>
+
+<script>
+import router from "@system.router"
+import storage from "@system.storage"
+
+const CFG_KEY = "quiz.enabled"
+/** 全部取消时写这个占位（storage 里空字符串等于删除） */
+const NONE_MARK = "none"
+
+const CLS_POEM = "row poem"
+const CLS_BOOK = "row book"
+
+export default {
+  /** 册名 / 篇目清单都来自 app.ux（全应用只打包一份） */
+  books() {
+    return this.$app.$def.books()
+  },
+  titles() {
+    return this.$app.$def.titles()
+  },
+  allTitles() {
+    return this.$app.$def.allTitles()
+  },
+
+  private: {
+    time: "00:00",
+    rows: [],
+    selCount: 0,
+    total: 0,
+  },
+
+  onInit() {
+    this.total = this.allTitles().length
+    this.sel = {}
+    this.heads = {}
+    this.loaded = false
+    this.saveTimer = null
+    const updateTime = () => {
+      const date = new Date()
+      const hour = date.getHours().toString().padStart(2, "0")
+      const minute = date.getMinutes().toString().padStart(2, "0")
+      this.time = hour + ":" + minute
+    }
+    updateTime()
+    this.timer = setInterval(updateTime, 60000)
+    this.load()
+  },
+
+  onDestroy() {
+    clearInterval(this.timer)
+    if (this.saveTimer) clearTimeout(this.saveTimer)
+    this.save()
+  },
+
+  load() {
+    storage.get({
+      key: CFG_KEY,
+      success: (data) => {
+        if (!data) this.applyAll(true)
+        else if (data === NONE_MARK) this.applyAll(false)
+        else this.applyList(data)
+      },
+      fail: () => this.applyAll(true),
+    })
+  },
+
+  applyAll(on) {
+    const ALL_TITLES = this.allTitles()
+    this.sel = {}
+    if (on) for (let i = 0; i < ALL_TITLES.length; i++) this.sel[ALL_TITLES[i]] = 1
+    this.loaded = true
+    this.rebuild()
+  },
+
+  applyList(data) {
+    const ALL_TITLES = this.allTitles()
+    this.sel = {}
+    const parts = String(data).split("\n")
+    for (let i = 0; i < parts.length; i++) {
+      const t = parts[i].trim()
+      if (t && ALL_TITLES.indexOf(t) >= 0) this.sel[t] = 1
+    }
+    this.loaded = true
+    this.rebuild()
+  },
+
+  /**
+   * 构建 75 行数据。
+   * 每行的 class 全部预先拼好，模板里只做纯字符串绑定 —— 手环上省掉大量表达式求值。
+   */
+  rebuild() {
+    const BOOKS = this.books()
+    const TITLES = this.titles()
+    const rows = []
+    const heads = {}
+    let id = 0
+    let count = 0
+    for (let b = 0; b < BOOKS.length; b++) {
+      const book = BOOKS[b]
+      const titles = TITLES[book] || []
+      let onInBook = 0
+      for (let i = 0; i < titles.length; i++) if (this.sel[titles[i]]) onInBook++
+      count += onInBook
+      const head = {
+        id: id++,
+        isBook: true,
+        book: book,
+        label: book,
+        mark: onInBook + "/" + titles.length,
+        on: onInBook > 0,
+        rowCls: CLS_BOOK,
+        nameCls: "book-name",
+        markCls: "book-count",
+      }
+      rows.push(head)
+      heads[book] = head
+      for (let i = 0; i < titles.length; i++) {
+        const t = titles[i]
+        const on = !!this.sel[t]
+        rows.push({
+          id: id++,
+          isBook: false,
+          book: book,
+          label: t,
+          mark: on ? "✓" : "○",
+          on: on,
+          rowCls: CLS_POEM,
+          nameCls: on ? "poem-name on" : "poem-name off",
+          markCls: on ? "poem-mark on" : "poem-mark off",
+        })
+      }
+    }
+    this.heads = heads
+    this.rows = rows
+    this.selCount = count
+  },
+
+  /** 只改这一行的显示字段，避免整张列表重绘 */
+  paintPoem(row, on) {
+    row.on = !!on
+    row.mark = on ? "✓" : "○"
+    row.nameCls = on ? "poem-name on" : "poem-name off"
+    row.markCls = on ? "poem-mark on" : "poem-mark off"
+  },
+
+  paintHead(row) {
+    const TITLES = this.titles()
+    const titles = TITLES[row.book] || []
+    let onInBook = 0
+    for (let i = 0; i < titles.length; i++) if (this.sel[titles[i]]) onInBook++
+    row.on = onInBook > 0
+    row.mark = onInBook + "/" + titles.length
+  },
+
+  onRow(id) {
+    const TITLES = this.titles()
+    const ALL_TITLES = this.allTitles()
+    const row = this.rows[id]
+    if (!row) return
+    if (row.isBook) {
+      // 整册切换：只要册内还有没选的，就全选；否则全不选
+      const titles = TITLES[row.book] || []
+      let allOn = true
+      for (let i = 0; i < titles.length; i++) if (!this.sel[titles[i]]) allOn = false
+      const v = allOn ? 0 : 1
+      // 注意：不能 delete 下标（Vela 响应式对象不支持 delete，会抛异常把应用搞挂）
+      for (let i = 0; i < titles.length; i++) this.sel[titles[i]] = v
+      // 只刷新本册的行（册头 id 之后紧跟本册篇目）
+      for (let i = id + 1; i <= id + titles.length; i++) {
+        const r = this.rows[i]
+        if (!r || r.isBook) break
+        this.paintPoem(r, v)
+      }
+      this.paintHead(row)
+    } else {
+      const on = this.sel[row.label] ? 0 : 1
+      this.sel[row.label] = on
+      this.paintPoem(row, on)
+      const head = this.heads[row.book]
+      if (head) this.paintHead(head)
+    }
+    let count = 0
+    for (let i = 0; i < ALL_TITLES.length; i++) if (this.sel[ALL_TITLES[i]]) count++
+    this.selCount = count
+    this.scheduleSave()
+  },
+
+  /** 400ms 防抖，避免连点把 flash 写爆 */
+  scheduleSave() {
+    if (this.saveTimer) clearTimeout(this.saveTimer)
+    this.saveTimer = setTimeout(() => {
+      this.saveTimer = null
+      this.save()
+    }, 400)
+  },
+
+  save() {
+    // 还没读完就退出时不能写，否则会把整份配置覆盖成空
+    if (!this.loaded) return
+    const ALL_TITLES = this.allTitles()
+    const list = []
+    for (let i = 0; i < ALL_TITLES.length; i++) {
+      if (this.sel[ALL_TITLES[i]]) list.push(ALL_TITLES[i])
+    }
+    const value = list.length ? list.join("\n") : NONE_MARK
+    storage.set({
+      key: CFG_KEY,
+      value: value,
+      success: () => console.log("[CFG] saved " + list.length + " poems"),
+      fail: (e, code) => console.log("[CFG] save fail " + code),
+    })
+  },
+
+  onSwipe(eve) {
+    if (!eve) return
+    if (eve.direction === "right" || eve.direction === "left") router.back()
+  },
+}
+</script>

@@ -1,0 +1,391 @@
+<template>
+  <div class="page" @swipe="onSwipe">
+    <image class="cover" src="/common/icon/cover.png"></image>
+    <text class="time">{{ time }}</text>
+    <text class="title">抽测</text>
+
+    <list class="body">
+      <list-item type="row">
+        <div class="cell">
+          <text class="meta">{{ metaText }}</text>
+          <text class="dir">{{ dirText }}</text>
+        </div>
+      </list-item>
+
+      <list-item type="row" @click="onCard">
+        <div class="cell">
+          <div class="card">
+            <!-- 填「上一句」：横线画在提示句上面，答案也出现在上面 -->
+            <text if="{{ askPrev && revealed }}" class="ans ans-top" style="font-size: {{ ansFont }}px">{{ ans }}</text>
+            <div if="{{ askPrev && hasQuestion && !revealed }}" class="blank-wrap blank-top">
+              <div class="blank"></div>
+            </div>
+            <text if="{{ askPrev && hasQuestion }}" class="cue" style="font-size: {{ cueFont }}px">{{ cue }}</text>
+
+            <!-- 填「下一句」：横线画在提示句下面 -->
+            <text if="{{ !askPrev && hasQuestion }}" class="cue" style="font-size: {{ cueFont }}px">{{ cue }}</text>
+            <text if="{{ !askPrev && revealed }}" class="ans" style="font-size: {{ ansFont }}px">{{ ans }}</text>
+            <div if="{{ !askPrev && hasQuestion && !revealed }}" class="blank-wrap">
+              <div class="blank"></div>
+            </div>
+
+            <text if="{{ !hasQuestion }}" class="idle-tip">{{ idleTip }}</text>
+          </div>
+        </div>
+      </list-item>
+
+      <list-item type="row">
+        <div class="cell">
+          <text class="hint">{{ hint }}</text>
+        </div>
+      </list-item>
+
+      <list-item type="row" @click="onMain">
+        <div class="cell">
+          <div class="btn">
+            <text class="btn-text">{{ btnText }}</text>
+          </div>
+        </div>
+      </list-item>
+    </list>
+  </div>
+</template>
+
+<style>
+.page {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #000000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cover {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 336px;
+  height: 102px;
+}
+
+.time {
+  position: absolute;
+  left: 77px;
+  top: 7px;
+  width: 182px;
+  font-size: 34px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.title {
+  position: absolute;
+  top: 62px;
+  width: 192px;
+  font-size: 30px;
+  color: #ffffff;
+  text-align: center;
+}
+
+.body {
+  margin-top: 102px;
+  flex: 1;
+  width: 336px;
+}
+
+.cell {
+  width: 336px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.meta {
+  margin-top: 14px;
+  width: 320px;
+  font-size: 21px;
+  color: #c5c5c5;
+  text-align: center;
+}
+
+.dir {
+  margin-top: 8px;
+  width: 300px;
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}
+
+.card {
+  margin-top: 16px;
+  width: 280px;
+  padding: 18px;
+  border-radius: 34px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.14);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.cue {
+  width: 280px;
+  color: #ffffff;
+  text-align: center;
+  line-height: 42px;
+}
+
+.ans {
+  width: 280px;
+  margin-top: 14px;
+  color: #7fe0c3;
+  text-align: center;
+  line-height: 42px;
+}
+
+.blank-wrap {
+  margin-top: 22px;
+  width: 240px;
+  height: 24px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.blank {
+  width: 220px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.55);
+}
+
+/* 填上一句时，横线与答案在提示句上方，间距方向相反 */
+.ans-top {
+  margin-top: 0px;
+  margin-bottom: 14px;
+}
+
+.blank-top {
+  margin-top: 0px;
+  margin-bottom: 22px;
+}
+
+.idle-tip {
+  width: 250px;
+  font-size: 32px;
+  color: rgba(255, 255, 255, 0.75);
+  text-align: center;
+  line-height: 42px;
+}
+
+.hint {
+  margin-top: 14px;
+  width: 300px;
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}
+
+.btn {
+  margin-top: 18px;
+  width: 250px;
+  height: 84px;
+  border-radius: 42px;
+  background-color: rgba(255, 255, 255, 0.22);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-text {
+  font-size: 34px;
+  color: #ffffff;
+}
+</style>
+
+<script>
+import router from "@system.router"
+import storage from "@system.storage"
+
+const CFG_KEY = "quiz.enabled"
+/** 用户把所有篇目都取消时用这个占位，避免空字符串导致 storage.delete */
+const NONE_MARK = "none"
+const MAX_RECENT = 8
+
+export default {
+  private: {
+    time: "00:00",
+    phase: "idle",
+    cue: "",
+    ans: "",
+    metaText: "正在读取背诵范围…",
+    dirText: "",
+    askPrev: false,
+    hint: "",
+    btnText: "抽一道",
+    hasQuestion: false,
+    revealed: false,
+    cueFont: 36,
+    ansFont: 36,
+    idleTip: "点下面的按钮\n随机抽一句来填",
+  },
+
+  onInit() {
+    this.enabled = []
+    this.recent = []
+    this.ready = false
+    const updateTime = () => {
+      const date = new Date()
+      const hour = date.getHours().toString().padStart(2, "0")
+      const minute = date.getMinutes().toString().padStart(2, "0")
+      this.time = hour + ":" + minute
+    }
+    updateTime()
+    this.timer = setInterval(updateTime, 60000)
+    this.loadConfig()
+  },
+
+  onDestroy() {
+    clearInterval(this.timer)
+  },
+
+  /** 全部篇名（来自 app.ux，全应用共享一份） */
+  allTitles() {
+    return this.$app.$def.allTitles()
+  },
+
+  /** 读取已勾选的篇目；从没设置过就用全部 */
+  loadConfig() {
+    storage.get({
+      key: CFG_KEY,
+      success: (data) => {
+        if (!data) this.enabled = this.allTitles().slice(0)
+        else if (data === NONE_MARK) this.enabled = []
+        else this.enabled = this.parseList(data)
+        this.applyConfig()
+      },
+      fail: () => {
+        this.enabled = this.allTitles().slice(0)
+        this.applyConfig()
+      },
+    })
+  },
+
+  parseList(data) {
+    if (!data || typeof data !== "string") return []
+    const out = []
+    const parts = data.split("\n")
+    for (let i = 0; i < parts.length; i++) {
+      const t = parts[i].trim()
+      if (t && this.allTitles().indexOf(t) >= 0) out.push(t)
+    }
+    return out
+  },
+
+  /** 注意：不能叫 onReady / onShow 之类，那是框架生命周期钩子名 */
+  applyConfig() {
+    this.ready = true
+    this.phase = "idle"
+    this.hasQuestion = false
+    this.revealed = false
+    this.cue = ""
+    this.ans = ""
+    this.dirText = ""
+    this.askPrev = false
+    this.metaText = "共 " + this.allTitles().length + " 篇 · 已选 " + this.enabled.length + " 篇"
+    if (!this.enabled.length) {
+      this.idleTip = "还没有勾选篇目"
+      this.btnText = "去设置范围"
+      this.hint = "在「背诵范围」里勾选要背的篇目"
+    } else {
+      this.idleTip = "点下面的按钮\n随机抽一句来填"
+      this.btnText = "抽一道"
+      this.hint = "左右滑动屏幕可返回"
+    }
+  },
+
+  /** 抽一道新题 */
+  nextQuestion() {
+    if (!this.enabled.length) return
+    const q = this.$app.$def.pick(this.enabled, this.recent)
+    if (!q) {
+      this.metaText = "这一篇暂时抽不出题目"
+      this.hasQuestion = false
+      this.btnText = "再试一次"
+      return
+    }
+    this.cue = q.cue
+    this.ans = q.ans
+    this.metaText = "「" + q.title + "」 " + q.people
+    this.dirText = q.dir === "prev" ? "要填的是它上面那一句" : "要填的是它下面那一句"
+    this.askPrev = q.dir === "prev"
+    this.cueFont = this.fontFor(q.cue)
+    this.ansFont = this.fontFor(q.ans)
+    this.hasQuestion = true
+    this.revealed = false
+    this.phase = "ask"
+    this.btnText = "看答案"
+    this.hint = "点卡片或按钮都行"
+    this.recent.push(q.key)
+    if (this.recent.length > MAX_RECENT) this.recent.shift()
+    console.log("[QUIZ] new " + q.title + " | " + q.cue + " -> " + q.ans)
+  },
+
+  /** 按字数自适应字号：一行放得下就用大字号，放不下最小到 24px（再长就换行，手环上仍能看清） */
+  fontFor(s) {
+    const n = String(s || "").length
+    const sizes = [36, 34, 32, 30, 28, 26, 24]
+    for (let i = 0; i < sizes.length; i++) {
+      if (n * sizes[i] <= 280) return sizes[i]
+    }
+    return 24
+  },
+
+  revealAnswer() {
+    if (!this.hasQuestion) return
+    this.revealed = true
+    this.phase = "reveal"
+    this.btnText = "下一题"
+    this.hint = "点「下一题」继续抽"
+    console.log("[QUIZ] reveal")
+  },
+
+  /** 大按钮：按当前阶段分派 */
+  onMain() {
+    const now = Date.now()
+    if (now - (this.lastMain || 0) < 250) return
+    this.lastMain = now
+    if (!this.ready) return
+    if (!this.enabled.length) {
+      router.push({ uri: "/pages/config" })
+      return
+    }
+    if (this.phase === "reveal") this.nextQuestion()
+    else if (this.phase === "ask") this.revealAnswer()
+    else this.nextQuestion()
+  },
+
+  /** 点卡片：看答案 / 下一题 */
+  onCard() {
+    const now = Date.now()
+    if (now - (this.lastCard || 0) < 250) return
+    this.lastCard = now
+    if (!this.ready || !this.hasQuestion) return
+    if (this.phase === "ask") this.revealAnswer()
+    else if (this.phase === "reveal") this.nextQuestion()
+  },
+
+  onSwipe(eve) {
+    if (!eve) return
+    if (eve.direction === "right" || eve.direction === "left") {
+      router.back()
+    }
+  },
+}
+</script>

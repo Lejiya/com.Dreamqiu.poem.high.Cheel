@@ -1,0 +1,49 @@
+{
+  "package": "com.Dreamqiu.poem.high.Cheel",
+  "name": "高中古诗词",
+  "versionName": "3.0.0",
+  "versionCode": 15,
+  "minPlatformVersion": 1000,
+  "icon": "/common/logo.png",
+  "deviceTypeList": [
+    "watch"
+  ],
+  "features": [
+    {
+      "name": "system.router"
+    },
+    {
+      "name": "system.storage"
+    }
+  ],
+  "config": {
+    "logLevel": "log",
+    "designWidth": 336
+  },
+  "router": {
+    "entry": "pages/index",
+    "pages": {
+      "pages/index": {
+        "component": "index"
+      },
+      "pages/detail": {
+        "component": "detail"
+      },
+      "pages/poem": {
+        "component": "poem"
+      },
+      "pages/about": {
+        "component": "about"
+      },
+      "pages/more": {
+        "component": "more"
+      },
+      "pages/quiz": {
+        "component": "quiz"
+      },
+      "pages/config": {
+        "component": "config"
+      }
+    }
+  }
+}

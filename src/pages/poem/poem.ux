@@ -1,0 +1,243 @@
+<template>
+  <div class="page" @swipe="toHomePage">
+    <!-- 点击跳转详情页 -->
+    <scroll class="column box center" scroll-y="true" bounces="true">
+      <div class="item1"></div>
+
+      <div class="description footer column center">
+        <text class="a">{{ people }}</text>
+        <text class="b">{{ poem }}</text>
+      </div>
+
+      <div class="item1"></div>
+      <div class="item1"></div>
+    </scroll>
+    <image class="cover" src="/common/icon/cover.png"></image>
+    <text class="time">{{ time }}</text>
+
+    <text class="title">{{ text }}</text>
+    <!--<image class="back" src="/common/icon/back.png" onclick="back"></image>-->
+  </div>
+</template>
+
+<script>
+import router from "@system.router"
+
+export default {
+  // 页面级组件的数据模型，影响传入数据的覆盖机制：private内定义的属性不允许被覆盖
+  private: {
+    title: "示例页面",
+    time: "00:00",
+    poem: "",
+    people: "",
+    text: "古诗",
+  },
+
+  onInit() {
+    this.fillText()
+    const updateTime = () => {
+      const date = new Date()
+      const hour = date.getHours().toString().padStart(2, "0")
+      const minute = date.getMinutes().toString().padStart(2, "0")
+      this.time = hour + ":" + minute
+    }
+    updateTime()
+    this.timer = setInterval(updateTime, 60000)
+  },
+
+  /** 参数可能比 onInit 晚到，onReady 里补一次 */
+  onReady() {
+    if (!this.people) this.fillText()
+  },
+
+  onDestroy() {
+    clearInterval(this.timer)
+  },
+
+  /** 从数据模块里取正文：只有被打开的这一篇会被取用到内存 */
+  fillText() {
+    const title = this.text
+    const item = this.$app.$def.poemOf(title)
+    if (item) {
+      this.people = item.people
+      this.poem = item.text
+      console.log("[POEM] loaded " + title + " " + item.text.length)
+    } else {
+      this.people = ""
+      this.poem = "没有找到这篇诗文"
+      console.log("[POEM] miss " + title)
+    }
+  },
+
+  navigateToPage(name) {
+    router.push({
+      uri: "/pages/detail",
+      params: {
+        text: name,
+      },
+    })
+  },
+
+  toHomePage(eve) {
+    if (eve.direction === "right") {
+      router.back()
+    }
+  },
+
+  back() {
+    router.back()
+  },
+}
+</script>
+
+<style>
+.item1 {
+  height: 60px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  border-radius: 15px;
+}
+
+.column {
+  flex-direction: column;
+}
+
+.center {
+  align-items: center;
+}
+
+.about {
+  position: absolute;
+  left: 258px;
+  top: 6px;
+  width: 72px;
+  height: 72px;
+}
+
+.cover {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 336px;
+  height: 102px;
+  opacity: 1;
+}
+
+.page {
+  align-items: center;
+  justify-content: center;
+  background-color: #000000;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: absolute;
+  width: 100%;
+}
+
+.name {
+  color: white;
+}
+
+.time {
+  left: 77px;
+  top: 7px;
+  width: 182px;
+  height: 48px;
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.6);
+  /** 文本1 */
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: 0px;
+  line-height: 33.6px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  vertical-align: top;
+  position: absolute;
+}
+
+.title {
+  position: absolute;
+  color: white;
+  background: rgba(255, 255, 255, 1);
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: 0px;
+  line-height: 44.8px;
+  color: rgba(255, 255, 255, 1);
+  text-align: center;
+  vertical-align: top;
+  position: absolute;
+  width: 70%;
+  text-align: center;
+  top: 50px;
+}
+
+.list {
+  width: 100%;
+  flex: 1;
+}
+
+.item {
+  height: 90px;
+  margin-top: 15px;
+  width: 324px;
+  margin-bottom: 15px;
+  border-radius: 20px;
+  background-color: rgba(38, 38, 38, 1);
+}
+
+.a {
+  font-size: 35px;
+  color: #c5c5c5;
+  margin-bottom: 20px;
+}
+
+.b {
+  font-size: 41px;
+}
+
+.box {
+  margin-top: 50px;
+  width: 97%;
+  flex: 1;
+}
+
+.qrcode {
+  width: 260px;
+  height: 260px;
+}
+
+.qr {
+  border-radius: 36px;
+  background: rgba(255, 255, 255, 1);
+}
+
+.back {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  width: 72px;
+  height: 72px;
+}
+
+.description {
+  border: 3px solid rgba(255, 255, 255, 0.06);
+  border-radius: 40px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 15px;
+  font-size: 14px;
+  margin: 0 auto;
+}
+
+.back {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  width: 72px;
+  height: 72px;
+  opacity: 0.5;
+}
+</style>

@@ -1,0 +1,149 @@
+<template>
+  <div class="page" @swipe="toHomePage">
+    <image class="cover" src="/common/icon/cover.png"></image>
+    <text class="time">{{ time }}</text>
+    <text class="title">更多</text>
+
+    <div class="menu">
+      <div class="but" @click="toQuiz">
+        <text class="but-text">抽 测</text>
+        <text class="but-sub">随机抽一句，填另一句</text>
+      </div>
+
+      <div class="but" @click="toConfig">
+        <text class="but-text">背诵范围</text>
+        <text class="but-sub">选择要背的篇目</text>
+      </div>
+
+      <div class="but" @click="more">
+        <text class="but-text">更多信息</text>
+        <text class="but-sub">说明与致谢</text>
+      </div>
+    </div>
+
+    <text class="ver">高中古诗词 V3.0.0</text>
+  </div>
+</template>
+
+<style>
+.page {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #000000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cover {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 336px;
+  height: 102px;
+}
+
+.time {
+  position: absolute;
+  left: 77px;
+  top: 7px;
+  width: 182px;
+  font-size: 34px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.title {
+  position: absolute;
+  top: 62px;
+  width: 192px;
+  font-size: 30px;
+  color: #ffffff;
+  text-align: center;
+}
+
+.menu {
+  margin-top: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.but {
+  margin-top: 10px;
+  width: 304px;
+  height: 104px;
+  border-radius: 52px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background-color: rgba(255, 255, 255, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.but-text {
+  font-size: 42px;
+  color: #ffffff;
+}
+
+.but-sub {
+  margin-top: 2px;
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ver {
+  position: absolute;
+  bottom: 10px;
+  width: 300px;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.28);
+  text-align: center;
+}
+</style>
+
+<script>
+import router from "@system.router"
+
+export default {
+  private: {
+    time: "00:00",
+  },
+
+  onInit() {
+    const updateTime = () => {
+      const date = new Date()
+      const hour = date.getHours().toString().padStart(2, "0")
+      const minute = date.getMinutes().toString().padStart(2, "0")
+      this.time = hour + ":" + minute
+    }
+    updateTime()
+    this.timer = setInterval(updateTime, 60000)
+  },
+
+  onDestroy() {
+    clearInterval(this.timer)
+  },
+
+  toHomePage(eve) {
+    if (eve && eve.direction === "right") {
+      router.replace({ uri: "/pages/index" })
+    }
+  },
+
+  toQuiz() {
+    router.push({ uri: "/pages/quiz" })
+  },
+
+  toConfig() {
+    router.push({ uri: "/pages/config" })
+  },
+
+  more() {
+    router.push({ uri: "/pages/more" })
+  },
+}
+</script>

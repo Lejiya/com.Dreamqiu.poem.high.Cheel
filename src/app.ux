@@ -1,0 +1,50 @@
+<script>
+import { BOOKS, TITLES, ALL_TITLES, getPoem } from "./common/poem-data"
+import { pickQuestion } from "./common/quiz"
+
+/**
+ * 应用级共享数据（全应用只打包这一份）
+ *
+ * 打包器会把页面 import 的模块**整份打进该页面自己的包**，所以之前 poem.js 与 quiz.js
+ * 各内嵌了一份 100KB 的诗文正文，包体涨到 430KB，而且每开一个页面都要重新读一遍。
+ * 现在把「诗文正文 + 抽测引擎」放在 app.ux，其它页面用 this.$app.$def.xxx() 访问
+ * （见官方文档 guide/framework/script/global-data-method：app.ux 的 export default
+ *  里的数据和方法，页面可通过 this.$app.$def 访问）。
+ *
+ * 注意：一律用方法暴露，不塞进 data —— 上百 KB 的字符串数组没必要做成响应式数据。
+ */
+export default {
+  /** 册名数组，如 ["必修-上", ...] */
+  books() {
+    return BOOKS
+  },
+
+  /** { 册名: [篇名, ...] } */
+  titles() {
+    return TITLES
+  },
+
+  /** 全部篇名（扁平） */
+  allTitles() {
+    return ALL_TITLES
+  },
+
+  /** 取一篇正文：{ people, text }，没有返回 null */
+  poemOf(title) {
+    return getPoem(title)
+  },
+
+  /** 抽一道题：先从篇目里等概率抽，再在该篇里等概率抽句子 */
+  pick(titles, avoidKeys) {
+    return pickQuestion(titles, avoidKeys)
+  },
+
+  onCreate() {
+    console.log("app created")
+  },
+
+  onDestroy() {
+    console.log("app destroyed")
+  },
+}
+</script>
