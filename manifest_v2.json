@@ -1,0 +1,52 @@
+{
+  "item": {
+    "id": "com.Dreamqiu.poem.high.Cheel",
+    "restype": "quick_app",
+    "name": "高中古诗词 3.0【三改】",
+    "description": "高中古诗词 v3.0.0​\n1.增加“其他”篇目，包含课外必背古诗词：​\n山居秋暝、菩萨蛮·小山重叠金明灭、苏幕遮·燎沉香、菩萨蛮·书江西造口壁、青玉案·元夕、贺新郎·国脉微如缕、长亭送别·正宫·端正好、朝天子·咏喇叭、报任安书（节选）​\n2.在更多中新增“抽查”“篇目设置”，可以依据自己需要设置抽查篇目，抽查样式为上下句填空​\n设计参考@无源流沙​\n开源地址：https://github.com/Lejiya/com.Dreamqiu.poem.high.Cheel/​\n致谢​\n原作者 @Dreamqiu、二改 @JIFENG",
+    "preview": [
+      "media/device-1794639444224.png",
+      "media/device-1794639436599.png",
+      "media/device-1794639428158.png",
+      "media/device-1794639425375.png"
+    ],
+    "icon": "media/logo.png",
+    "cover": "media/ink-3x2.png",
+    "author": [
+      {
+        "name": "bandbbs_656157",
+        "bindABAccount": true
+      }
+    ]
+  },
+  "links": [
+    {
+      "title": "开源地址",
+      "url": "https://github.com/Lejiya/com.Dreamqiu.poem.high.Cheel/​",
+      "icon": "github-logo"
+    }
+  ],
+  "downloads": {
+    "xmb11nfc": {
+      "version": "3.0.0",
+      "file_name": "downloads/com.Dreamqiu.poem.high.Cheel.release.3.0.0.rpk",
+      "versionCode": 15
+    },
+    "xmb11": {
+      "version": "3.0.0",
+      "file_name": "downloads/com.Dreamqiu.poem.high.Cheel.release.3.0.0.rpk",
+      "versionCode": 15
+    },
+    "xmb10nfc": {
+      "version": "3.0.0",
+      "file_name": "downloads/com.Dreamqiu.poem.high.Cheel.release.3.0.0.rpk",
+      "versionCode": 15
+    },
+    "xmb10": {
+      "version": "3.0.0",
+      "file_name": "downloads/com.Dreamqiu.poem.high.Cheel.release.3.0.0.rpk",
+      "versionCode": 15
+    }
+  },
+  "ext": {}
+}
